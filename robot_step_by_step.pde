@@ -1,38 +1,40 @@
 World world;
 
+Flowchart robotflow = new Flowchart();
+Node step1 = new Node("isBlocked()");
+Node truestep2 = new Node("turnleft()");
+Node falsestep2 = new Node("move()");
+Node step3 = new Node("isBlocked()");
+Node truestep4 = new Node("turnleft()");
+Node falsestep4 = new Node("move()");
+Node step5 = new Node("turnright()");
+Node step6 = new Node("turnleft()");
+
 void setup() {
   size(1200, 600); 
   background(255);
   world = new World(50);
   world.update();
   robotflow.head = step1;
-  robotflow.head.next = step2;
-  step2.next = step3;
-  step3.next = step4;
-  step4.next = trueStep5;
-  step4.nextFalse = falseStep5;
-  trueStep5.next = step6;
-  step6.next = step7;
-  step7.next = step8;
-  step8.next = falseStep9;
-  step8.nextFalse = falseStep9;
-  robotflow.flowprint();
+  step1.next = truestep2;
+  step1.nextFalse = falsestep2;
+  truestep2.next = step6;
+  falsestep2.next = step3;
+  step3.next = truestep4;
+  step3.nextFalse = falsestep4;
+  truestep4.next = step5;
+  falsestep4.next=step5;
+  step5.next= step6;
+  //robotflow.flowprint();
+  robotflow.sethead();
 }
 
 void draw() {
+  robotflow.runflow();
   world.update();
+  
 }
-Flowchart robotflow = new Flowchart();
-Node step1 = new Node("move()");
-Node step2 = new Node("turnleft()");
-Node step3 = new Node("move()");
-Node step4 = new Node("isBlocked()");
-Node trueStep5 = new Node("turnleft()");
-Node falseStep5 = new Node("move()");
-Node step6 = new Node("move()");
-Node step7 = new Node("turnleft()");
-Node step8 = new Node("isBlocked()");
-Node falseStep9 = new Node("move()");
+
 
 class World {
   Robot robot ;
@@ -41,12 +43,17 @@ class World {
   int block_size;
   InputProcessor input;
 
+
+
+
   World(int block_size ) {
     this.robot = new Robot(5, 5, this);
     this.block_size = block_size;
     this.target = new Target(int(random(0, width/this.block_size)), int(random(0, height/this.block_size)), this);
-    this.walls = new Wall[65];
+    this.walls = new Wall[50];
     this.input = new InputProcessor('w', 'd', 'a');
+
+
 
     for (int x = 0; x < walls.length; x += 1) { // create object walls
       walls[x] = new Wall(int(random(0, width/this.block_size)), int(random(0, height/this.block_size)), this);
@@ -55,6 +62,8 @@ class World {
       }
     }
   }
+
+
 
   void draw () {
     this.robot.draw();
@@ -132,7 +141,7 @@ class Robot {
 
   int column, rown ;
   char direction ;
-  char[] directioncollection = {'w', 'd', 's', 'a'};
+
 
   Robot(int column, int rown, World world) {
     this.column = column ;
@@ -189,40 +198,51 @@ class Robot {
   }
 
   void move() {
-
+    delay(300);
     if (this.direction == 'w') {
-      if (this.rown > 0 && this.isBlocked()== false) this.rown -= 1 ;
+      if (this.isBlocked() == false) this.rown -= 1 ;
     } else if (this.direction == 'd') {
-      if (this.column < width/world.block_size-1 && this.isBlocked()== false) this.column += 1;
+      if (this.isBlocked()== false) this.column += 1;
     } else if (this.direction == 's') {
-      if (this.rown < height/world.block_size-1 && this.isBlocked()== false) this.rown += 1;
+      if (this.isBlocked()== false) this.rown += 1;
     } else if (this.direction == 'a') {
-      if (this.column > 0 && this.isBlocked()== false)this.column -= 1;
+      if (this.isBlocked()== false)this.column -= 1;
     }
-  }
-
-  void left() {
-
-    for (int x = 0; x < directioncollection.length; x +=1) {
-      if (directioncollection[x] == this.direction) {
-        if (x == 3) this.direction = directioncollection[0];
-        else  this.direction = directioncollection[x+1];
-        break;
-      }
-    }
-    background(255);
   }
 
   void right() {
-
-    for (int x = 0; x < directioncollection.length; x +=1) {
-      if (directioncollection[x] == this.direction) {
-        if (x == 0) this.direction = directioncollection[3];
-        else  this.direction = directioncollection[x-1];
-        break;
-      }
+    delay(300);
+    if (this.direction == 'w') {
+      this.direction ='d';
     }
-    background(255);
+    else if (this.direction == 'd') {
+      this.direction ='s';
+    }
+    else if (this.direction == 's') {
+      this.direction ='a';
+    }
+    else if (this.direction == 'a') {
+      this.direction ='w';
+    }
+    this.draw();
+  }
+
+  void left() {
+    delay(300);
+    if (this.direction == 'w') {
+      this.direction ='a';
+    }
+    else if (this.direction == 'a') {
+      this.direction ='s';
+    }
+    else if (this.direction == 's') {
+      this.direction ='d';
+    }
+    else if (this.direction == 'd') {
+      this.direction ='w';
+    }
+    
+    this.draw();
   }
 
   Boolean isBlocked() {
@@ -231,19 +251,19 @@ class Robot {
 
     if (this.direction == 'w') {
       for (int i = 0; i < world.walls.length; i += 1) { // check wall at the font
-        if (world.walls[i].rown == this.rown - 1 && world.walls[i].column == this.column) check = true;
+        if (this.rown == 0 || world.walls[i].rown == this.rown - 1 && world.walls[i].column == this.column) check = true;
       }
     } else if (this.direction == 'd') {
       for (int i = 0; i < world.walls.length; i += 1) { // check wall at the right
-        if (world.walls[i].rown == this.rown && world.walls[i].column == this.column + 1) check = true;
+        if (this.column == width/world.block_size-1 || world.walls[i].rown == this.rown && world.walls[i].column == this.column + 1) check = true;
       }
     } else if (this.direction == 's') {
       for (int i = 0; i < world.walls.length; i += 1) { // check wall at below
-        if (world.walls[i].rown == this.rown + 1 && world.walls[i].column == this.column) check = true;
+        if (this.rown == height/world.block_size-1 || (world.walls[i].rown == this.rown + 1 && world.walls[i].column == this.column)) check = true;
       }
     } else if (this.direction == 'a') {
       for (int i = 0; i < world.walls.length; i += 1) { // check wall at the left
-        if (world.walls[i].rown == this.rown && world.walls[i].column == this.column - 1) check = true;
+        if (this.column == 0 || world.walls[i].rown == this.rown && world.walls[i].column == this.column - 1) check = true;
       }
     }
     return check ;
@@ -338,17 +358,21 @@ class Node {
 
 class Flowchart {
   Node head;
-
+  Node runTrue;
   Flowchart() {
-
     this.head = null;
+    runTrue = null;
   }
-
+  void sethead (){
+    runTrue = this.head;
+  }
+  
   void flowprint() {
 
     Node printTrue = this.head;
     Node printFalse = null ; 
-
+    
+    
     while (printTrue != null) {
 
       if (printFalse != null) {
@@ -374,4 +398,40 @@ class Flowchart {
       }
     }
   }
+
+  void runflow () {
+    
+    while (runTrue!= null) {  
+      if (runTrue.data == "move()") {
+        world.robot.move();
+        runTrue = runTrue.next;
+        break;
+        
+      }
+      if (runTrue.data == "turnleft()") {
+        world.robot.left();
+        runTrue = runTrue.next;
+        break;
+      }
+      if (runTrue.data == "turnright()") {
+        world.robot.right();
+        runTrue = runTrue.next;
+        break;
+      }
+
+      if (runTrue.data == "isBlocked()") {
+        if (world.robot.isBlocked()) {
+          runTrue = runTrue.next;
+          
+        } else {
+          runTrue = runTrue.nextFalse;
+          
+        }
+      }
+    }
+    if (runTrue == null){
+      runTrue = this.head;
+    }
+  }
+  
 }
