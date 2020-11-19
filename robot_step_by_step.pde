@@ -15,7 +15,7 @@ void setup() {
   background(255);
   world = new World(50);
   world.update();
-  robotflow.head = step1;
+  robotflow.sethead(step1);
   step1.next = truestep2;
   step1.nextFalse = falsestep2;
   truestep2.next = step6;
@@ -25,8 +25,8 @@ void setup() {
   truestep4.next = step5;
   falsestep4.next=step5;
   step5.next= step6;
-  //robotflow.flowprint();
-  robotflow.sethead();
+  robotflow.flowprint();
+  
 }
 
 void draw() {
@@ -358,13 +358,14 @@ class Node {
 
 class Flowchart {
   Node head;
-  Node runTrue;
+  Node run;
   Flowchart() {
     this.head = null;
-    runTrue = null;
+    run = null;
   }
-  void sethead (){
-    runTrue = this.head;
+  void sethead (Node first){
+    this.head = first;
+    run = this.head;
   }
   
   void flowprint() {
@@ -401,36 +402,36 @@ class Flowchart {
 
   void runflow () {
     
-    while (runTrue!= null) {  
-      if (runTrue.data == "move()") {
+    while (run!= null) {  
+      if (run.data == "move()") {
         world.robot.move();
-        runTrue = runTrue.next;
+        run = run.next;
         break;
         
       }
-      if (runTrue.data == "turnleft()") {
+      if (run.data == "turnleft()") {
         world.robot.left();
-        runTrue = runTrue.next;
+        run = run.next;
         break;
       }
-      if (runTrue.data == "turnright()") {
+      if (run.data == "turnright()") {
         world.robot.right();
-        runTrue = runTrue.next;
+        run = run.next;
         break;
       }
 
-      if (runTrue.data == "isBlocked()") {
+      if (run.data == "isBlocked()") {
         if (world.robot.isBlocked()) {
-          runTrue = runTrue.next;
+          run = run.next;
           
         } else {
-          runTrue = runTrue.nextFalse;
+          run = run.nextFalse;
           
         }
       }
     }
-    if (runTrue == null){
-      runTrue = this.head;
+    if (run == null){
+      run = this.head;
     }
   }
   
