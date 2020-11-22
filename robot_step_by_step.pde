@@ -1,38 +1,16 @@
 World world;
 
-Flowchart robotflow = new Flowchart();
-Node step1 = new Node("isBlocked()");
-Node truestep2 = new Node("turnleft()");
-Node falsestep2 = new Node("move()");
-Node step3 = new Node("isBlocked()");
-Node truestep4 = new Node("turnleft()");
-Node falsestep4 = new Node("move()");
-Node step5 = new Node("turnright()");
-Node step6 = new Node("turnleft()");
 
 void setup() {
   size(1200, 600); 
   background(255);
   world = new World(50);
   world.update();
-  robotflow.sethead(step1);
-  step1.next = truestep2;
-  step1.nextFalse = falsestep2;
-  truestep2.next = step6;
-  falsestep2.next = step3;
-  step3.next = truestep4;
-  step3.nextFalse = falsestep4;
-  truestep4.next = step5;
-  falsestep4.next=step5;
-  step5.next= step6;
-  robotflow.flowprint();
-  
 }
 
 void draw() {
-  robotflow.runflow();
+  world.runflow();
   world.update();
-  
 }
 
 
@@ -43,6 +21,13 @@ class World {
   int block_size;
   InputProcessor input;
 
+  Flowchart robotflow = new Flowchart();
+  Node step1 = new Node("move()");
+  Node step2 = new Node("turnleft()");
+  Node step3 = new Node("isBlocked()");
+  Node step4 = new Node("turnleft()");
+  Node step5 = new Node("move()");
+
 
 
 
@@ -51,8 +36,15 @@ class World {
     this.block_size = block_size;
     this.target = new Target(int(random(0, width/this.block_size)), int(random(0, height/this.block_size)), this);
     this.walls = new Wall[50];
-    this.input = new InputProcessor('w', 'd', 'a');
+    this.input = new InputProcessor('w', 'a', 'd');
 
+
+
+    robotflow.sethead(step1);
+    step1.next = step2;
+    step2.next = step3;
+    step3.next = step4;
+    step3.nextFalse = step5;
 
 
     for (int x = 0; x < walls.length; x += 1) { // create object walls
@@ -63,7 +55,9 @@ class World {
     }
   }
 
-
+  void runflow() {
+    robotflow.runflow();
+  }
 
   void draw () {
     this.robot.draw();
@@ -214,14 +208,11 @@ class Robot {
     delay(300);
     if (this.direction == 'w') {
       this.direction ='d';
-    }
-    else if (this.direction == 'd') {
+    } else if (this.direction == 'd') {
       this.direction ='s';
-    }
-    else if (this.direction == 's') {
+    } else if (this.direction == 's') {
       this.direction ='a';
-    }
-    else if (this.direction == 'a') {
+    } else if (this.direction == 'a') {
       this.direction ='w';
     }
     this.draw();
@@ -231,17 +222,14 @@ class Robot {
     delay(300);
     if (this.direction == 'w') {
       this.direction ='a';
-    }
-    else if (this.direction == 'a') {
+    } else if (this.direction == 'a') {
       this.direction ='s';
-    }
-    else if (this.direction == 's') {
+    } else if (this.direction == 's') {
       this.direction ='d';
-    }
-    else if (this.direction == 'd') {
+    } else if (this.direction == 'd') {
       this.direction ='w';
     }
-    
+
     this.draw();
   }
 
@@ -363,17 +351,17 @@ class Flowchart {
     this.head = null;
     run = null;
   }
-  void sethead (Node first){
+  void sethead (Node first) {
     this.head = first;
     run = this.head;
   }
-  
+
   void flowprint() {
 
     Node printTrue = this.head;
     Node printFalse = null ; 
-    
-    
+
+
     while (printTrue != null) {
 
       if (printFalse != null) {
@@ -401,13 +389,12 @@ class Flowchart {
   }
 
   void runflow () {
-    
+
     while (run!= null) {  
       if (run.data == "move()") {
         world.robot.move();
         run = run.next;
         break;
-        
       }
       if (run.data == "turnleft()") {
         world.robot.left();
@@ -423,16 +410,13 @@ class Flowchart {
       if (run.data == "isBlocked()") {
         if (world.robot.isBlocked()) {
           run = run.next;
-          
         } else {
           run = run.nextFalse;
-          
         }
       }
     }
-    if (run == null){
+    if (run == null) {
       run = this.head;
     }
   }
-  
 }
