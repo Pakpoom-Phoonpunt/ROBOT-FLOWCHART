@@ -2,15 +2,24 @@ World world;
 
 
 void setup() {
+  
   size(1200, 600); 
   background(255);
   world = new World(50);
   world.update();
+  world.robotflow.sethead(1,"move()");  
+  world.robotflow.connect(1 , 2 , "isBlocked()"); // .connect(base , next , command )
+  world.robotflow.connect(2 , 3 , "turnleft()");
+  world.robotflow.connectFalseWay(2 , 4 , "move()");
+  world.robotflow.flowprint();
+  
 }
 
 void draw() {
+  
   world.runflow();
   world.update();
+  
 }
 
 
@@ -22,14 +31,6 @@ class World {
   InputProcessor input;
 
   Flowchart robotflow = new Flowchart();
-  Node step1 = new Node("move()");
-  Node step2 = new Node("turnleft()");
-  Node step3 = new Node("isBlocked()");
-  Node step4 = new Node("turnleft()");
-  Node step5 = new Node("move()");
-
-
-
 
   World(int block_size ) {
     this.robot = new Robot(5, 5, this);
@@ -37,14 +38,6 @@ class World {
     this.target = new Target(int(random(0, width/this.block_size)), int(random(0, height/this.block_size)), this);
     this.walls = new Wall[50];
     this.input = new InputProcessor('w', 'a', 'd');
-
-
-
-    robotflow.sethead(step1);
-    step1.next = step2;
-    step2.next = step3;
-    step3.next = step4;
-    step3.nextFalse = step5;
 
 
     for (int x = 0; x < walls.length; x += 1) { // create object walls
@@ -347,13 +340,36 @@ class Node {
 class Flowchart {
   Node head;
   Node run;
+  Node[] steplist = {};
+
   Flowchart() {
     this.head = null;
     run = null;
   }
-  void sethead (Node first) {
-    this.head = first;
+
+  void sethead (int step, String command) {
+    step = step - 1;
+    Node temp = new Node (command);
+    steplist = (Node[]) append(steplist , temp);
+    this.head = steplist[step];
     run = this.head;
+  }
+  
+  void connect (int base, int next, String command) {
+    Node tempnext = new Node (command);
+    base = base - 1;
+    next = next - 1;
+    steplist = (Node[]) append(steplist , tempnext);
+    steplist[base].next = steplist[next];
+    
+  }
+  
+  void connectFalseWay (int base, int next, String command) {
+    Node tempnext = new Node (command);
+    base = base - 1;
+    next = next - 1;
+    steplist = (Node[]) append(steplist , tempnext);
+    steplist[base].nextFalse = steplist[next];
   }
 
   void flowprint() {
