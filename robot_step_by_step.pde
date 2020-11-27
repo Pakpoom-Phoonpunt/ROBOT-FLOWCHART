@@ -7,10 +7,10 @@ void setup() {
   background(255);
   world = new World(50);
   world.update();
-  world.robotflow.sethead(1,"move()");  
-  world.robotflow.connect(1 , 2 , "isBlocked()"); // .connect(base , next , command )
-  world.robotflow.connect(2 , 3 , "turnleft()");
-  world.robotflow.connectFalseWay(2 , 4 , "move()");
+  world.robotflow.sethead("A","move()");
+  world.robotflow.connect("A" , "B" , "isBlocked()");
+  world.robotflow.connect("B" , "B1" , "turnleft()");
+  world.robotflow.connectFalseWay("B" , "B2" , "move()");
   world.robotflow.flowprint();
   
 }
@@ -340,36 +340,42 @@ class Node {
 class Flowchart {
   Node head;
   Node run;
-  Node[] steplist = {};
+  Node[] nodelist = {};
+  String[] nodename = {};
 
   Flowchart() {
     this.head = null;
     run = null;
   }
 
-  void sethead (int step, String command) {
-    step = step - 1;
+  void sethead (String name, String command) {
+    
+    nodename = append(nodename,name);
+    int idx = arrayIndex(nodename , name);
+    
     Node temp = new Node (command);
-    steplist = (Node[]) append(steplist , temp);
-    this.head = steplist[step];
+    nodelist = (Node[]) append(nodelist , temp);
+    this.head = nodelist[idx];
     run = this.head;
   }
   
-  void connect (int base, int next, String command) {
+  void connect (String base, String next, String command) {
+    nodename = append(nodename,next);
+    int idxbase = arrayIndex(nodename , base);
+    int idxnext = arrayIndex(nodename , next);
     Node tempnext = new Node (command);
-    base = base - 1;
-    next = next - 1;
-    steplist = (Node[]) append(steplist , tempnext);
-    steplist[base].next = steplist[next];
+    nodelist = (Node[]) append(nodelist , tempnext);
+    nodelist[idxbase].next = nodelist[idxnext];
     
   }
   
-  void connectFalseWay (int base, int next, String command) {
+  void connectFalseWay (String base, String next, String command) {
+    nodename = append(nodename,next);
+    int idxbase = arrayIndex(nodename , base);
+    int idxnext = arrayIndex(nodename , next);
     Node tempnext = new Node (command);
-    base = base - 1;
-    next = next - 1;
-    steplist = (Node[]) append(steplist , tempnext);
-    steplist[base].nextFalse = steplist[next];
+    nodelist = (Node[]) append(nodelist , tempnext);
+    nodelist[idxbase].nextFalse = nodelist[idxnext];
   }
 
   void flowprint() {
@@ -435,4 +441,15 @@ class Flowchart {
       run = this.head;
     }
   }
+}
+
+int arrayIndex(String[] x, String value) {
+  int a = 0;
+  for (int i=0; i<x.length; i++){
+    if (x[i]==value) {
+      a = i ; 
+      return(i);
+    }
+  }
+  return (a);
 }
