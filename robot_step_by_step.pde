@@ -7,10 +7,9 @@ void setup() {
   background(255);
   world = new World(50);
   world.update();
-  world.robotflow.sethead("A","move()");
-  world.robotflow.connect("A" , "B" , "isBlocked()");
-  world.robotflow.connect("B" , "B1" , "turnleft()");
-  world.robotflow.connectFalseWay("B" , "B2" , "move()");
+  world.robotflow.sethead("move()");
+  world.robotflow.addcommand("turnleft()");
+  world.robotflow.addcommand("turnright()");
   world.robotflow.flowprint();
   
 }
@@ -342,21 +341,31 @@ class Flowchart {
   Node run;
   Node[] nodelist = {};
   String[] nodename = {};
+  Node first ;
 
   Flowchart() {
     this.head = null;
     run = null;
   }
 
-  void sethead (String name, String command) {
-    
-    nodename = append(nodename,name);
-    int idx = arrayIndex(nodename , name);
-    
+  void sethead (String command) {
     Node temp = new Node (command);
-    nodelist = (Node[]) append(nodelist , temp);
-    this.head = nodelist[idx];
+    first = temp;
+    this.head = first;
     run = this.head;
+  }
+  void addcommand(String command) {
+    Node commandtemp = new Node (command);
+    this.addcom(this.head, commandtemp);
+    run = this.head;
+  }
+
+  void addcom (Node base, Node next) {
+    if (base.next == null) {
+      base.next = next;
+    } else {
+      this.addcom(base.next, next);
+    }
   }
   
   void connect (String base, String next, String command) {
@@ -448,7 +457,6 @@ int arrayIndex(String[] x, String value) {
   for (int i=0; i<x.length; i++){
     if (x[i]==value) {
       a = i ; 
-      return(i);
     }
   }
   return (a);
