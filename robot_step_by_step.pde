@@ -8,8 +8,7 @@ void setup() {
   world = new World(50);
   world.update();
   world.robotflow.sethead("move()");
-  world.robotflow.addcommand("turnleft()");
-  world.robotflow.addcommand("turnright()");
+  world.robotflow.addcondition("isBlocked()","turnleft()","move()");
   world.robotflow.flowprint();
   
 }
@@ -365,6 +364,24 @@ class Flowchart {
       base.next = next;
     } else {
       this.addcom(base.next, next);
+    }
+  }
+  
+  void addcondition (String command , String truecom , String falsecom) {
+    Node commandtemp = new Node (command);
+    Node truetemp = new Node (truecom);
+    Node falsetemp = new Node (falsecom);
+    this.addconcom(this.head, commandtemp,truetemp,falsetemp);
+    run = this.head;
+  }
+  void addconcom (Node base, Node condition , Node truecom , Node falsecom) {
+    condition.next = truecom;
+    condition.nextFalse = falsecom;
+    
+    if (base.next == null) {
+      base.next = condition;
+    } else {
+      this.addcom(base.next, condition);
     }
   }
   
