@@ -340,7 +340,6 @@ class Flowchart {
   Node run;
   Node[] nodelist = {};
   String[] nodename = {};
-  Node first ;
 
   Flowchart() {
     this.head = null;
@@ -348,9 +347,7 @@ class Flowchart {
   }
 
   void sethead (String command) {
-    Node temp = new Node (command);
-    first = temp;
-    this.head = first;
+    this.head = new Node (command);
     run = this.head;
   }
   void addcommand(String command) {
