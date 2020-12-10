@@ -8,7 +8,9 @@ void setup() {
   world = new World(50);
   world.update();
   world.robotflow.sethead("move()");
-  world.robotflow.addcondition("isBlocked()","turnleft()","move()");
+  world.robotflow.addcommand("move()");
+  world.robotflow.addcommand("turnleft()");
+  world.robotflow.addcommand("turnright()");
   world.robotflow.flowprint();
   
 }
@@ -357,7 +359,11 @@ class Flowchart {
   }
 
   void addcom (Node base, Node next) {
-    if (base.next == null) {
+    if(base.data == "isBlocked()"){
+      this.addcom(base.next,next);
+      this.addcom(base.nextFalse,next);
+    }
+    else if (base.next == null) {
       base.next = next;
     } else {
       this.addcom(base.next, next);
@@ -379,6 +385,32 @@ class Flowchart {
       base.next = condition;
     } else {
       this.addcom(base.next, condition);
+    }
+  }
+  void addtrue(String command) {
+    Node commandtemp = new Node (command);
+    this.addt(this.head, commandtemp);
+    run = this.head;
+  }
+  void addt (Node base, Node next) {
+    if (base.data == "isBlocked()") {
+      this.addcom(base.next,next);
+    }
+    else {
+      this.addt(base.next, next);
+    }
+  }
+  void addfalse(String command) {
+    Node commandtemp = new Node (command);
+    this.addf(this.head, commandtemp);
+    run = this.head;
+  }
+  void addf (Node base, Node next) {
+    if (base.data == "isBlocked()") {
+      this.addcom(base.nextFalse,next);
+    }
+    else {
+      this.addf(base.next, next);
     }
   }
   
