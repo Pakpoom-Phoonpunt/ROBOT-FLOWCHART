@@ -7,10 +7,11 @@ void setup() {
   background(255);
   world = new World(50);
   world.update();
-  world.robotflow.sethead("move()");
-  world.robotflow.addcommand("move()");
-  world.robotflow.addcommand("turnleft()");
-  world.robotflow.addcommand("turnright()");
+  world.robotflow.sethead("move()");  // sethead(command)
+  world.robotflow.addcondition("isBlocked()","turnleft()","turnright()"); //addcondition (condition , true , false)
+  world.robotflow.addtruecommand("turnleft()"); // addtruecommand (command)
+  world.robotflow.addfalsecommand("turnright()"); // addfalsecommand (command)
+  world.robotflow.addcommand("move()"); // addcommand (command)
   world.robotflow.flowprint();
   
 }
@@ -348,70 +349,91 @@ class Flowchart {
     run = null;
   }
 
-  void sethead (String command) {
+  void sethead (String command) { // set first command of flowchart
     this.head = new Node (command);
     run = this.head;
   }
-  void addcommand(String command) {
+  
+  void addcommand(String command) {  // add commamd continue from last commamd and use to end of condition command
     Node commandtemp = new Node (command);
-    this.addcom(this.head, commandtemp);
+    this.sup_addcommand(this.head, commandtemp);
     run = this.head;
   }
-
-  void addcom (Node base, Node next) {
+  
+  void sup_addcommand (Node base, Node next) { // sup method for addcommand use recursive
     if(base.data == "isBlocked()"){
-      this.addcom(base.next,next);
-      this.addcom(base.nextFalse,next);
+      this.sup_addcommand(base.next,next);
+      this.sup_addcommand(base.nextFalse,next);
     }
     else if (base.next == null) {
       base.next = next;
-    } else {
-      this.addcom(base.next, next);
+    } else {    
+      this.sup_addcommand(base.next, next);   // recursive until find base.next = null or base.data = "isBlocked()"
     }
   }
   
-  void addcondition (String command , String truecom , String falsecom) {
+  void addcondition (String command , String truecom , String falsecom) { // add condition command continue from last commamd
     Node commandtemp = new Node (command);
     Node truetemp = new Node (truecom);
     Node falsetemp = new Node (falsecom);
-    this.addconcom(this.head, commandtemp,truetemp,falsetemp);
+    this.sup_addcondition(this.head, commandtemp,truetemp,falsetemp);
     run = this.head;
   }
-  void addconcom (Node base, Node condition , Node truecom , Node falsecom) {
+  
+  void sup_addcondition (Node base, Node condition , Node truecom , Node falsecom) { // sup method for addcondition use recursive
     condition.next = truecom;
     condition.nextFalse = falsecom;
     
     if (base.next == null) {
       base.next = condition;
     } else {
-      this.addcom(base.next, condition);
+      this.sup_addcondition(base.next, condition , truecom , falsecom);
     }
   }
-  void addtrue(String command) {
+  
+  void addtruecommand(String command) { // add truecommamd continue from last truecommamd
     Node commandtemp = new Node (command);
-    this.addt(this.head, commandtemp);
+    this.sup_addtrue(this.head, commandtemp);
     run = this.head;
   }
-  void addt (Node base, Node next) {
-    if (base.data == "isBlocked()") {
-      this.addcom(base.next,next);
+  
+  void sup_addtrue (Node base, Node next) {  // sup method for addtruecommand use recursive
+    if (base.data == "isBlocked()"){
+      this.sup_addtrue(base.next,next);
     }
-    else {
-      this.addt(base.next, next);
+    else if (base.next == null){
+      base.next = next;
+    }
+    else{
+      this.sup_addtrue(base.next,next);
     }
   }
-  void addfalse(String command) {
+  void addfalsecommand(String command) { // add falsecommamd continue from last falsecommamd
     Node commandtemp = new Node (command);
-    this.addf(this.head, commandtemp);
+    this.sup_addfalse(this.head, commandtemp);
     run = this.head;
+  
+}
+  void sup_addfalse (Node base, Node next) {  // sup method for addfalsecommand use recursive
+    if (base.data == "isBlocked()"){
+      this.sup_addfalse(base.nextFalse,next);
+    }
+    else if (base.next == null){
+      base.next = next;
+    }
+    else{
+      this.sup_addfalse(base.next,next);
+    }
   }
-  void addf (Node base, Node next) {
-    if (base.data == "isBlocked()") {
-      this.addcom(base.nextFalse,next);
-    }
-    else {
-      this.addf(base.next, next);
-    }
+  
+  void addtruecondition(String command , String truecom , String falsecom) {
+    Node commandtemp = new Node (command);
+    Node truetemp = new Node (truecom);
+    Node falsetemp = new Node (falsecom);
+    commandtemp.next = truetemp;
+    commandtemp.nextFalse = falsetemp;
+    this.sup_addtrue(this.head, commandtemp);
+    run = this.head;
   }
   
   void connect (String base, String next, String command) {
