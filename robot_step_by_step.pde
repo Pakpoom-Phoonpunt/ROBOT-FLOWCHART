@@ -2,25 +2,32 @@ World world;
 
 
 void setup() {
-  
+
   size(1200, 600); 
   background(255);
   world = new World(50);
   world.update();
   world.robotflow.sethead("move()");  // sethead(command)
-  world.robotflow.addcondition("isBlocked()","turnleft()","turnright()"); //addcondition (condition , true , false)
+  world.robotflow.addcondition("isBlocked()", "turnleft()", "turnright()"); //addcondition (condition , true , false)
   world.robotflow.addtruecommand("turnleft()"); // addtruecommand (command)
   world.robotflow.addfalsecommand("turnright()"); // addfalsecommand (command)
-  world.robotflow.addcommand("move()"); // addcommand (command)
-  world.robotflow.flowprint();
+  world.robotflow.addendconditioncommand("move()"); // addendconditioncommand (command)
   
+  world.robotflow.addcommand("turnleft()");// addcommand (command)
+  world.robotflow.addcondition("isBlocked()", "turnleft()", "turnright()");
+  world.robotflow.addendconditioncommand("move()");
+  
+  world.robotflow.addcondition("isBlocked()", "turnleft()", "turnright()");
+  world.robotflow.addendconditioncommand("move()");
+  
+  world.robotflow.addcommand("turnright()");
+  world.robotflow.flowprint();
 }
 
 void draw() {
-  
+
   world.runflow();
   world.update();
-  
 }
 
 
@@ -328,11 +335,11 @@ class InputProcessor {
 
 class Node {
   String data;
-  Node next, nextFalse;
+  Node nextTrue, nextFalse;
 
   Node(String data) {
     this.data = data;
-    this.next = null;
+    this.nextTrue = null;
     this.nextFalse = null;
   }
 }
@@ -343,7 +350,7 @@ class Flowchart {
   Node run;
   Node[] nodelist = {};
   String[] nodename = {};
-
+  int amountOfconditions = 0;
   Flowchart() {
     this.head = null;
     run = null;
@@ -353,178 +360,212 @@ class Flowchart {
     this.head = new Node (command);
     run = this.head;
   }
-  
+
   void addcommand(String command) {  // add commamd continue from last commamd and use to end of condition command
     Node commandtemp = new Node (command);
     this.sup_addcommand(this.head, commandtemp);
     run = this.head;
   }
-  
+
   void sup_addcommand (Node base, Node next) { // sup method for addcommand use recursive
-    if(base.data == "isBlocked()"){
-      this.sup_addcommand(base.next,next);
-      this.sup_addcommand(base.nextFalse,next);
-    }
-    else if (base.next == null) {
-      base.next = next;
+    if (base.nextTrue == null) {
+      base.nextTrue = next;
     } else {    
-      this.sup_addcommand(base.next, next);   // recursive until find base.next = null or base.data = "isBlocked()"
+      this.sup_addcommand(base.nextTrue, next);   // recursive until find base.next = null or base.data = "isBlocked()"
     }
   }
-  
-  void addcondition (String command , String truecom , String falsecom) { // add condition command continue from last commamd
+
+  void addcondition (String command, String truecom, String falsecom) { // add condition command continue from last commamd
     Node commandtemp = new Node (command);
     Node truetemp = new Node (truecom);
     Node falsetemp = new Node (falsecom);
-    this.sup_addcondition(this.head, commandtemp,truetemp,falsetemp);
+    this.sup_addcondition(this.head, commandtemp, truetemp, falsetemp);
     run = this.head;
+    amountOfconditions += 1 ;
   }
-  
-  void sup_addcondition (Node base, Node condition , Node truecom , Node falsecom) { // sup method for addcondition use recursive
-    condition.next = truecom;
+
+  void sup_addcondition (Node base, Node condition, Node truecom, Node falsecom) { // sup method for addcondition use recursive
+    condition.nextTrue = truecom;
     condition.nextFalse = falsecom;
-    
-    if (base.next == null) {
-      base.next = condition;
+
+    if (base.nextTrue == null) {
+      base.nextTrue = condition;
     } else {
-      this.sup_addcondition(base.next, condition , truecom , falsecom);
+      this.sup_addcondition(base.nextTrue, condition, truecom, falsecom);
     }
   }
-  
-  void addtruecommand(String command) { // add truecommamd continue from last truecommamd
+  void addendconditioncommand (String command) {
     Node commandtemp = new Node (command);
-    this.sup_addtrue(this.head, commandtemp);
+    this.sup_addendconditioncommand(this.head, commandtemp);
     run = this.head;
   }
-  
-  void sup_addtrue (Node base, Node next) {  // sup method for addtruecommand use recursive
-    if (base.data == "isBlocked()"){
-      this.sup_addtrue(base.next,next);
+  void sup_addendconditioncommand (Node base, Node next) {
+    int checkAmountOfconditions = 0;
+    if (base.data == "isBlocked()") {
+      checkAmountOfconditions += 1;
     }
-    else if (base.next == null){
-      base.next = next;
-    }
-    else{
-      this.sup_addtrue(base.next,next);
+    if (base.data == "isBlocked()" && checkAmountOfconditions == amountOfconditions ) {
+      this.sup_addendconditioncommand(base.nextTrue, next);
+      this.sup_addendconditioncommand(base.nextFalse, next);
+      
+    } else if (base.nextTrue == null) {
+      base.nextTrue = next;
+      
+    } else {    
+      this.sup_addendconditioncommand(base.nextTrue, next);
     }
   }
-  void addfalsecommand(String command) { // add falsecommamd continue from last falsecommamd
-    Node commandtemp = new Node (command);
-    this.sup_addfalse(this.head, commandtemp);
-    run = this.head;
-  
+
+
+int getDeepValueTrueWay (Node flow) {
+  int i = 0;
+  while (flow!= null) {
+    i += 1;
+    flow = flow.nextTrue;
+  }
+  return i;
 }
-  void sup_addfalse (Node base, Node next) {  // sup method for addfalsecommand use recursive
-    if (base.data == "isBlocked()"){
-      this.sup_addfalse(base.nextFalse,next);
+int getDeepValueFalseWay (Node flow) {
+  int i = 0;
+  while (flow!= null) {
+    if (flow.data == "isBlocked()") {
+      i += 1;
+      flow = flow.nextFalse;
     }
-    else if (base.next == null){
-      base.next = next;
-    }
-    else{
-      this.sup_addfalse(base.next,next);
+
+    i += 1;
+    flow = flow.nextTrue;
+  }
+  return i;
+}
+void addtruecommand(String command) { // add truecommamd continue from last truecommamd
+  Node commandtemp = new Node (command);
+  this.sup_addtrue(this.head, commandtemp);
+  run = this.head;
+}
+
+void sup_addtrue (Node base, Node next) {  // sup method for addtruecommand use recursive
+  if (base.data == "isBlocked()") {
+    this.sup_addtrue(base.nextTrue, next);
+  } else if (base.nextTrue == null) {
+    base.nextTrue = next;
+  } else {
+    this.sup_addtrue(base.nextTrue, next);
+  }
+}
+void addfalsecommand(String command) { // add falsecommamd continue from last falsecommamd
+  Node commandtemp = new Node (command);
+  this.sup_addfalse(this.head, commandtemp);
+  run = this.head;
+}
+void sup_addfalse (Node base, Node next) {  // sup method for addfalsecommand use recursive
+  if (base.data == "isBlocked()") {
+    this.sup_addfalse(base.nextFalse, next);
+  } else if (base.nextTrue == null) {
+    base.nextTrue = next;
+  } else {
+    this.sup_addfalse(base.nextTrue, next);
+  }
+}
+
+void addtruecondition(String command, String truecom, String falsecom) {
+  Node commandtemp = new Node (command);
+  Node truetemp = new Node (truecom);
+  Node falsetemp = new Node (falsecom);
+  commandtemp.nextTrue = truetemp;
+  commandtemp.nextFalse = falsetemp;
+  this.sup_addtrue(this.head, commandtemp);
+  run = this.head;
+}
+
+void connect (String base, String next, String command) {
+  nodename = append(nodename, next);
+  int idxbase = arrayIndex(nodename, base);
+  int idxnext = arrayIndex(nodename, next);
+  Node tempnext = new Node (command);
+  nodelist = (Node[]) append(nodelist, tempnext);
+  nodelist[idxbase].nextTrue = nodelist[idxnext];
+}
+
+void connectFalseWay (String base, String next, String command) {
+  nodename = append(nodename, next);
+  int idxbase = arrayIndex(nodename, base);
+  int idxnext = arrayIndex(nodename, next);
+  Node tempnext = new Node (command);
+  nodelist = (Node[]) append(nodelist, tempnext);
+  nodelist[idxbase].nextFalse = nodelist[idxnext];
+}
+
+void flowprint() {
+
+  Node printTrue = this.head;
+  Node printFalse = null ; 
+
+
+  while (printTrue != null) {
+
+    if (printFalse != null) {
+
+      print (printTrue.data + "  ");
+      println (printFalse.data);
+
+      if (printTrue.nextTrue  ==  printFalse.nextTrue) {
+        printTrue = printTrue.nextTrue;
+        printFalse = null;
+      } else {
+        printTrue = printTrue.nextTrue;
+        printFalse = printFalse.nextTrue;
+      }
+    } else {
+
+      println (printTrue.data);
+
+      if (printTrue.nextFalse != null) {
+        printFalse = printTrue.nextFalse;
+      }
+      printTrue = printTrue.nextTrue;
     }
   }
-  
-  void addtruecondition(String command , String truecom , String falsecom) {
-    Node commandtemp = new Node (command);
-    Node truetemp = new Node (truecom);
-    Node falsetemp = new Node (falsecom);
-    commandtemp.next = truetemp;
-    commandtemp.nextFalse = falsetemp;
-    this.sup_addtrue(this.head, commandtemp);
+}
+
+void runflow () {
+
+  while (run!= null) {  
+    if (run.data == "move()") {
+      world.robot.move();
+      run = run.nextTrue;
+      break;
+    }
+    if (run.data == "turnleft()") {
+      world.robot.left();
+      run = run.nextTrue;
+      break;
+    }
+    if (run.data == "turnright()") {
+      world.robot.right();
+      run = run.nextTrue;
+      break;
+    }
+
+    if (run.data == "isBlocked()") {
+      if (world.robot.isBlocked()) {
+        run = run.nextTrue;
+      } else {
+        run = run.nextFalse;
+      }
+    }
+  }
+  if (run == null) {
     run = this.head;
   }
-  
-  void connect (String base, String next, String command) {
-    nodename = append(nodename,next);
-    int idxbase = arrayIndex(nodename , base);
-    int idxnext = arrayIndex(nodename , next);
-    Node tempnext = new Node (command);
-    nodelist = (Node[]) append(nodelist , tempnext);
-    nodelist[idxbase].next = nodelist[idxnext];
-    
-  }
-  
-  void connectFalseWay (String base, String next, String command) {
-    nodename = append(nodename,next);
-    int idxbase = arrayIndex(nodename , base);
-    int idxnext = arrayIndex(nodename , next);
-    Node tempnext = new Node (command);
-    nodelist = (Node[]) append(nodelist , tempnext);
-    nodelist[idxbase].nextFalse = nodelist[idxnext];
-  }
-
-  void flowprint() {
-
-    Node printTrue = this.head;
-    Node printFalse = null ; 
-
-
-    while (printTrue != null) {
-
-      if (printFalse != null) {
-
-        print (printTrue.data + "  ");
-        println (printFalse.data);
-
-        if (printTrue.next  ==  printFalse.next) {
-          printTrue = printTrue.next;
-          printFalse = null;
-        } else {
-          printTrue = printTrue.next;
-          printFalse = printFalse.next;
-        }
-      } else {
-
-        println (printTrue.data);
-
-        if (printTrue.nextFalse != null) {
-          printFalse = printTrue.nextFalse;
-        }
-        printTrue = printTrue.next;
-      }
-    }
-  }
-
-  void runflow () {
-
-    while (run!= null) {  
-      if (run.data == "move()") {
-        world.robot.move();
-        run = run.next;
-        break;
-      }
-      if (run.data == "turnleft()") {
-        world.robot.left();
-        run = run.next;
-        break;
-      }
-      if (run.data == "turnright()") {
-        world.robot.right();
-        run = run.next;
-        break;
-      }
-
-      if (run.data == "isBlocked()") {
-        if (world.robot.isBlocked()) {
-          run = run.next;
-        } else {
-          run = run.nextFalse;
-        }
-      }
-    }
-    if (run == null) {
-      run = this.head;
-    }
-  }
+}
 }
 
 int arrayIndex(String[] x, String value) {
   int a = 0;
-  for (int i=0; i<x.length; i++){
+  for (int i=0; i<x.length; i++) {
     if (x[i]==value) {
-      a = i ; 
+      a = i ;
     }
   }
   return (a);
